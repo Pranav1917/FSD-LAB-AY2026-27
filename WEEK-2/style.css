@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background: #f4f4f4;
+    background: #21ff76;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -8,7 +8,7 @@ body {
 }
 
 .quiz-container {
-    background: white;
+    background: rgb(157, 241, 206);
     padding: 20px;
     width: 350px;
     border-radius: 10px;
