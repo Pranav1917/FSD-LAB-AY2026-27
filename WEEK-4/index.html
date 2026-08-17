@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Weather Dashboard</title>
+
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial;margin:0;background:#eef5ff;color:#222}
+.container{max-width:1000px;margin:auto;padding:25px}
+h1{text-align:center;color:#1565c0}
+.search{display:flex;gap:10px;margin:20px 0}
+select,button{padding:12px;border:1px solid #ccc;border-radius:6px;font-size:16px}
+select{flex:1}
+button{background:#1565c0;color:white;cursor:pointer}
+.current{background:#1565c0;color:white;padding:25px;border-radius:12px;text-align:center}
+.current .temp{font-size:55px;font-weight:bold;margin:10px}
+.details,.forecast{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:20px 0}
+.card{background:white;padding:18px;border-radius:10px;text-align:center;box-shadow:0 2px 6px #0002}
+.card h3{color:#1565c0}
+.forecast{grid-template-columns:repeat(7,1fr)}
+.forecast .card{padding:15px}
+#msg{text-align:center;color:red}
+@media(max-width:750px){
+.details{grid-template-columns:repeat(2,1fr)}
+.forecast{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>🌤 Weather Dashboard</h1>
+
+<div class="search">
+<select id="city">
+<option value="">Select City</option>
+<option>Hyderabad</option>
+<option>Bengaluru</option>
+<option>Chennai</option>
+<option>Mumbai</option>
+<option>Delhi</option>
+<option>Kolkata</option>
+<option>Pune</option>
+<option>Vijayawada</option>
+<option>Visakhapatnam</option>
+<option>Tirupati</option>
+</select>
+<button onclick="getWeather()">Get Weather</button>
+</div>
+
+<p id="msg"></p>
+<div id="current"></div>
+
+<h2>Today's Details</h2>
+<div id="details" class="details"></div>
+
+<h2>7-Day Forecast</h2>
+<div id="forecast" class="forecast"></div>
+
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+const codes={
+0:"Clear",1:"Mainly Clear",2:"Partly Cloudy",3:"Cloudy",
+45:"Fog",48:"Fog",51:"Drizzle",53:"Drizzle",55:"Drizzle",
+61:"Rain",63:"Rain",65:"Heavy Rain",71:"Snow",73:"Snow",
+75:"Heavy Snow",80:"Showers",81:"Showers",82:"Heavy Showers",
+95:"Thunderstorm"
+};
+
+async function getWeather(){
+let city=$("city").value;
+if(!city){$("msg").textContent="Select a city";return}
+
+$("msg").textContent="Loading...";
+
+try{
+let g=await fetch(
+`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`
+);
+let geo=await g.json();
+if(!geo.results)throw Error();
+
+let l=geo.results[0];
+
+let w=await fetch(
+`https://api.open-meteo.com/v1/forecast?latitude=${l.latitude}&longitude=${l.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,pressure_msl,cloud_cover,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`
+);
+
+let d=await w.json(),c=d.current;
+
+$("current").innerHTML=`
+<div class="current">
+<h2>${l.name}, ${l.country}</h2>
+<div class="temp">${Math.round(c.temperature_2m)}°C</div>
+<h3>${codes[c.weather_code]}</h3>
+</div>`;
+
+$("details").innerHTML=`
+<div class="card"><h3>🌡 Feels Like</h3><p>${Math.round(c.apparent_temperature)}°C</p></div>
+<div class="card"><h3>💧 Humidity</h3><p>${c.relative_humidity_2m}%</p></div>
+<div class="card"><h3>💨 Wind</h3><p>${c.wind_speed_10m} km/h</p></div>
+<div class="card"><h3>🌧 Rain</h3><p>${c.precipitation} mm</p></div>
+<div class="card"><h3>☁ Cloud Cover</h3><p>${c.cloud_cover}%</p></div>
+<div class="card"><h3>🔽 Pressure</h3><p>${c.pressure_msl} hPa</p></div>
+<div class="card"><h3>🌡 Temperature</h3><p>${Math.round(c.temperature_2m)}°C</p></div>
+<div class="card"><h3>☀ Condition</h3><p>${codes[c.weather_code]}</p></div>
+`;
+
+$("forecast").innerHTML=d.daily.time.map((x,i)=>`
+<div class="card">
+<h3>${new Date(x).toLocaleDateString("en-US",{weekday:"short"})}</h3>
+<p>${codes[d.daily.weather_code[i]]}</p>
+<p>⬆ ${Math.round(d.daily.temperature_2m_max[i])}°C</p>
+<p>⬇ ${Math.round(d.daily.temperature_2m_min[i])}°C</p>
+<p>🌧 ${d.daily.precipitation_probability_max[i]}%</p>
+</div>
+`).join("");
+
+$("msg").textContent="";
+}catch(e){
+$("msg").textContent="Unable to get weather data";
+}
+}
+</script>
+</body>
+</html>
