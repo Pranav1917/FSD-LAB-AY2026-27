@@ -1,0 +1,8 @@
+const router=require("express").Router(),Movie=require("../models/Movie"),Show=require("../models/Show"),Seat=require("../models/SeatReservation"),{requireAuth,requireAdmin}=require("../middleware/auth");
+router.get("/",async(req,res,next)=>{try{res.json({movies:await Movie.find(req.query.status?{status:req.query.status}:{ }).sort({title:1})});}catch(e){next(e);}});
+router.get("/shows",async(req,res,next)=>{try{const f={};if(req.query.movieId)f.movie=req.query.movieId;if(req.query.date)f.date=req.query.date;res.json({shows:await Show.find(f).populate("movie","title price").sort({date:1,time:1})});}catch(e){next(e);}});
+router.get("/shows/:id/seats",async(req,res,next)=>{try{const show=await Show.findById(req.params.id);if(!show)return res.status(404).json({message:"Show not found."});const rows=await Seat.find({show:show._id,status:"BOOKED"}).select("seat -_id");res.json({show,bookedSeats:rows.map(x=>x.seat)});}catch(e){next(e);}});
+router.post("/",requireAuth,requireAdmin,async(req,res,next)=>{try{res.status(201).json({movie:await Movie.create(req.body)});}catch(e){next(e);}});
+router.put("/:id",requireAuth,requireAdmin,async(req,res,next)=>{try{const m=await Movie.findByIdAndUpdate(req.params.id,req.body,{new:true,runValidators:true});if(!m)return res.status(404).json({message:"Movie not found."});res.json({movie:m});}catch(e){next(e);}});
+router.delete("/:id",requireAuth,requireAdmin,async(req,res,next)=>{try{const m=await Movie.findByIdAndDelete(req.params.id);if(!m)return res.status(404).json({message:"Movie not found."});res.json({message:"Movie deleted."});}catch(e){next(e);}});module.exports=router;
+

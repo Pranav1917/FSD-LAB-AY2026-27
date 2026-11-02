@@ -1,0 +1,1 @@
+const mongoose=require("mongoose");module.exports=mongoose.model("Movie",new mongoose.Schema({title:{type:String,required:true,unique:true,trim:true},price:{type:Number,required:true,min:1},image:{type:String,default:""},status:{type:String,enum:["now-showing","coming-soon"],default:"now-showing"},description:{type:String,default:""}},{timestamps:true}));

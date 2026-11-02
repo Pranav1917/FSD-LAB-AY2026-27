@@ -1,0 +1,1 @@
+const mongoose=require("mongoose");const s=new mongoose.Schema({movie:{type:mongoose.Schema.Types.ObjectId,ref:"Movie",required:true},date:{type:String,required:true},time:{type:String,required:true},screen:{type:String,default:"Screen 1"},capacity:{type:Number,default:40}},{timestamps:true});s.index({movie:1,date:1,time:1},{unique:true});module.exports=mongoose.model("Show",s);
